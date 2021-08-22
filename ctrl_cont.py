@@ -58,11 +58,11 @@ def clean_process(cont):
 if __name__ == '__main__':
 
     # Create cont
-#    """ 
-    node_type = 'ff'
+    """ 
+    node_type = 'vws'
     cmd = ''
-    i=1
-    while i <= 1:
+    i=3
+    while i <= 17:
         if node_type == 'vws':
             cmd = 'sudo docker run --name vws_node{} -h vws_node{} --net weave -e "FFR_NAME=perf_router" -e "FFR_ID={}" -e "TENANT_ID={}" -e "LD_LIBRARY_PATH=/usr/lib" -e --ipc=container:perf_router -v /sys/class/:/sys/class/ -v /freeflow:/freeflow -v /dev/:/dev/ --privileged --device=/dev/infiniband/uverbs0 --device=/dev/infiniband/rdma_cm -it -d vws_node:fifth /bin/bash'.format(i, i, i, i)
         else:
@@ -70,14 +70,14 @@ if __name__ == '__main__':
         print(cmd)
         bash(cmd)
         i += 1
-#    """
-    # Update cont
     """
-    i=1
+    # Update cont
+#    """
+    i=3
     while i <= 17:
         bash('docker exec vws_node{} sh -c "cd /freeflow/vws_freeflow ; ./build-service.sh"'.format(i))
         i+=1
-    """
+#    """
 
     # Remove cont
     """

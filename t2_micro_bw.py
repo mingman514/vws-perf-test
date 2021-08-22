@@ -16,7 +16,7 @@ Columns:
 ## Fill basic info below
 ## (MUST CHECK BEFORE EXECUTE)
 ################################
-server = '10.0.31.2'
+server = '10.0.35.2'
 base_path = '/freeflow/vws_freeflow'
 save_path = '/freeflow/test_result/test2/bw'
 
@@ -26,8 +26,8 @@ SUB_TASK_NUM = 1    # just in case
 TESTNAME = 'MicroBW'
 CONT_NAME = 'vws_node1'
 TEST_TYPE = ''
-MSG_SIZE = 1    # No use because of -a option
-QPNUM = 4       # default 4
+MSG_SIZE = 4096    # No use because of -a option
+QPNUM = 1       # default 4
 #POST_CNT = 1
 
 
@@ -73,6 +73,7 @@ if __name__ == '__main__':
     target = 'vws_node1'
 
 
+    MSG_SIZE = 4
     while(MSG_SIZE <= 4194304): # 4MB
         for test_t in test_list:
             TEST_TYPE = test_t
@@ -88,16 +89,16 @@ if __name__ == '__main__':
             repeat = 100000 if MSG_SIZE < 65536 else int(2147483648 / MSG_SIZE)
             opt += ' -n ' + str(repeat)
             opt += ' -s ' + str(MSG_SIZE)
-            opt += ' -q 4'
+            opt += ' -q ' + str(QPNUM)
             if Iam == CLIENT:
-                opt += ' 10.32.0.5' # it might be a good idea to map all the pairs
+                opt += ' 10.36.0.2' # it might be a good idea to map all the pairs
                 opt += ' > {}/{}'.format(save_path, f)
 
             # 4. Run test
             print(opt)
             if Iam == CLIENT:
                 print('Sleep for sync')
-                time.sleep(1)
+                time.sleep(3)
 
             vc.perf_test(target, test_t, opt, 0, False)
 

@@ -18,17 +18,17 @@ Columns:
 ################################
 server = '10.0.35.2'
 base_path = '/freeflow/vws_freeflow'
-save_path = '/freeflow/test_result/test3/qp_bw'
+save_path = '/freeflow/test_result/test3/cont_bw'
 
-SCENARIO_NUM = 2
+SCENARIO_NUM = 3
 TEST_NUM = 1        # just in case
 SUB_TASK_NUM = 1    # just in case
-TESTNAME = 'MultiQP'
+TESTNAME = 'MultiCont'
 CONT_NAME = ''
 TEST_TYPE = ''
 MSG_SIZE = 1048576
-QPNUM = 1       
-STD_QPNUM = 1
+QPNUM = 4       
+STD_CONTNUM = 1
 
 ################################
 ## Global Variables
@@ -47,13 +47,10 @@ def initialize(target):
 def name_generator(cont, msg_size, qpnum):
     return '{}-{}-{}_{}_{}_{}_{}_{}_{}'.format(
             SCENARIO_NUM, TEST_NUM, SUB_TASK_NUM, TESTNAME, cont,
-            TEST_TYPE, msg_size, qpnum, STD_QPNUM
+            TEST_TYPE, msg_size, qpnum, STD_CONTNUM
             )
 
 def clean_process():
-#    vc.kill_cont_process(cont, 'ib_send')
-#    vc.kill_cont_process(cont, 'ib_write')
-#    vc.kill_cont_process(cont, 'ib_read')
     bash('echo comnet02 | sudo kill -9 $(top | pgrep ib_send)')
     bash('echo comnet02 | sudo kill -9 $(top | pgrep ib_read)')
     bash('echo comnet02 | sudo kill -9 $(top | pgrep ib_write)')
@@ -65,8 +62,6 @@ def run(cont, Iam):
     qpnum = QPNUM
        
     # CUSTOM DETAIL
-    if cont_id != 1:
-        qpnum = STD_QPNUM
 
     default_opt = '-S 3 -Q 1 -D 60'
     opt = default_opt
@@ -77,19 +72,15 @@ def run(cont, Iam):
     f = name_generator(cont, msg_size, qpnum)
     print('name: ',f)
 
-    if Iam == CLIENT and cont_id == 1:
-        opt += ' 10.36.0.2' # it might be a good idea to map all the pairs
+    if Iam == CLIENT:
+        opt += ' 10.36.0.' + str(cont_id + 1) # it might be a good idea to map all the pairs
         opt += ' > {}/{}'.format(save_path, f)
-    elif Iam == CLIENT and cont_id == 2:
-        opt += ' 10.36.0.3' # it might be a good idea to map all the pairs
-        opt += ' > {}/{}'.format(save_path, f)
-
 
     # 4. Run test
     print(opt)
     if Iam == CLIENT:
         print('Sleep for sync')
-        time.sleep(3)
+        time.sleep(2)
 
     vc.perf_test(cont, test_t, opt, 0, False)
 
@@ -105,17 +96,15 @@ if __name__ == '__main__':
 # MAX_POST_CNT, MSG_SIZE, TEST_TYPE
 
     test_list = ['sb', 'rb', 'wb']
-    containers = ['vws_node1']     # chg
+    
 
-    SERVER_NUM = 1
-    for i in range(SERVER_NUM):
-        s_id = i + 2
-        containers.append('vws_node' + str(s_id))
+    while STD_CONTNUM <= 16:
+        containers = ['vws_node1']     # chg
 
-    """
-    Filter by STD_QPNUM!
-    """
-    while(STD_QPNUM <= 256):
+        for i in range(STD_CONTNUM):
+            s_id = i + 2
+            containers.append('vws_node' + str(s_id))
+
 
         for test_t in test_list:
             TEST_TYPE = test_t
@@ -133,7 +122,7 @@ if __name__ == '__main__':
                 proc.join()
             print('--- JOIN COMPLETED ---')
             
-        STD_QPNUM *= 2
+        STD_CONTNUM *= 2
 
 
 

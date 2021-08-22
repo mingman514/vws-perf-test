@@ -152,7 +152,8 @@ def perf_test(cont_name, test, option, timelimit, TESTING=False):
         print('[perf_test] {} {}'.format(testname, option))
         return;
     else:
-        bash('docker exec {} sh -c "{} {};"'.format(cont_name, testname, option))
+        print('[perf_test] {} {}'.format(testname, option))
+        bash('docker exec -d {} sh -c "stdbuf -o0 {} {};"'.format(cont_name, testname, option))
     status = async_wait(cont_name, testname, timelimit)
     if status > 0:
         print('Not responding... restart program')
@@ -162,13 +163,44 @@ def perf_test(cont_name, test, option, timelimit, TESTING=False):
 
         time.sleep(5)
         perf_test(cont_name, test, option, timelimit)
-    if '>' in opt:
-        res_path = opt.split('> ')[1]
+    if '>' in option:
+        res_path = option.split('> ')[1]
         bash('cat {}'.format(res_path))
     print('Wait for program ends')
-    time.sleep(7)
+    time.sleep(5)
 
-            
+def perf_test_gen_traffic(cont_name, test, option, timelimit, TESTING=False):
+    """
+    ex. ib_send_bw -S 3 -Q 1 -a
+        -> perf_test('vws_node1', 'sb', '-S 3 -Q 1 -a')
+    """
+    testname = test_t_translate(test)
+    if TESTING:
+        print('[perf_test] {} {}'.format(testname, option))
+        return;
+    else:
+        print('[perf_test] {} {}'.format(testname, option))
+        bash('docker exec -d {} sh -c "stdbuf -o0 {} {};"'.format(cont_name, testname, option))
+
+    # wait until lat program executed
+    FLAG = 1
+    while(FLAG):
+        try:
+            processing = bash_return('docker top ' + cont_name + ' | pgrep lat')
+            print('lat program started')
+            FLAG = 0
+        except:
+            FLAG = 1
+        time.sleep(1)
+    # wait until lat program terminated
+    status = async_wait(cont_name, 'lat', timelimit)
+
+    if '>' in option:
+        res_path = option.split('> ')[1]
+        bash('cat {}'.format(res_path))
+    print('Wait for program ends')
+    time.sleep(5)
+           
 # How to implement waiting until the 'exec' end?
 # Or, I must always care about the runtime...
 
